@@ -275,6 +275,98 @@ print(store_df)
 As the table shown, train_MSE increases slightly as $\lambda$ increases, while test_MSE reaches minimum at $\lambda = 100$, which is regarded as the optimal penalty parameter among these three.  
 Larger $\lambda$ results to smaller DoF. As $\lambda$ increases, the parameters are heavily constrained and the degrees of freedom will effectively be lower, tending to 0 as $\lambda → ∞$ . In summary, $\lambda$ controls the complexity of the model, when it increases (DoF decreases), model becomes simpler; when it decreases (DoF increases), model becomes more complex. Since there is a trade-off of model complexity for the best model, there exists optimal values of $\lambda$ and DoF.
 
+## Assignment 3. Logistic regression and basis function expansion
+
+### Q1
+
+```{r, logistic1, echo = FALSE}
+rawdata <- read.csv("pima-indians-diabetes.csv", header = F)
+
+data1 <- rawdata[,c(2,8,9)]
+plot(data1$V2, data1$V8, col = data1$V9 + 1, pch = 19, cex = 0.5, xlab = "Plasma glucose concentration", ylab = "Age", main = "True label")
+legend("topleft", legend = c("No diabetes", "Diabetes"), col = c(1, 2), pch = 19)
+```
+The scatterplot shows that it is quite hard to form a convincing decision boundary. In the black point-clustering area (considering no diabetes), there also exists many red points (with diabetes). This will result in *false negative*, which should avoid as much as possible in this diagnosis problem.
+
+### Q2
+```{r, logistic2, echo = FALSE}
+m1=glm(V9~., data1, family = "binomial")
+m1$coefficients
+
+Prob=predict(m1, type="response")
+pred=ifelse(Prob>0.5, 1, 0)
+
+true <- data1$V9
+con_table <- table(true, pred)
+con_table
+
+train_error <- 1-sum(diag(con_table))/sum(con_table)
+cat("The training misclassification error is:",train_error,"\n")
+
+plot(data1$V2, data1$V8, col = pred + 1, pch = 19, cex = 0.5, xlab = "Plasma glucose concentration", ylab = "Age", main = "Predict label (r = 0.5)")
+legend("topleft", legend = c("No diabetes", "Diabetes"), col = c(1, 2), pch = 19)
+```
+$$p(y=1\mid \textbf{x})=\frac{1}{1+exp(5.912-0.036x_1-0.025x_2)}$$  
+
+The training misclassification error means that more than a quarter of cases are misclassified. And the confusion table shows that more than half of the people with diabetes are not diagnosed. 
+
+### Q3
+
+Set the above probability equation equals 0.5 to get the equation of the decision boundary: $$5.912-0.036x_1-0.025x_2=0$$.
+```{r, logistic3, echo = FALSE}
+plot(data1$V2, data1$V8, col = pred + 1, pch = 19, cex = 0.5, xlab = "Plasma glucose concentration", ylab = "Age", main = "Predict label (r = 0.5)")
+legend("topleft", legend = c("No diabetes", "Diabetes"), col = c(1, 2), pch = 19)
+abline(a = 5.91244906/0.02477835, b = -0.03564404/0.02477835, col = "green")
+```
+Catch well.  
+
+### Q4
+```{r, logistic4, echo = FALSE}
+threshold <- c(0.2,0.8)
+store_list <- list()
+
+for (i in 1:length(threshold)){
+  store_list$r[i] <- threshold[i]
+  pred=ifelse(Prob>threshold[i], 1, 0)
+  con_table <- table(true, pred)
+  #store_list$confusion_table[i] <- con_table
+  store_list$train_error[i] <- 1-sum(diag(con_table))/sum(con_table)
+  
+  plot(data1$V2, data1$V8, col = pred + 1, pch = 19, cex = 0.5, xlab = "Plasma glucose concentration", ylab = "Age", main = paste0("Predict label (r = ",threshold[i],")"))
+  legend("topleft", legend = c("No diabetes", "Diabetes"), col = c(1, 2), pch = 19)
+  abline(a = -(log((1-threshold[i])/threshold[i])-5.91244906)/0.02477835, b = -0.03564404/0.02477835, col = "green")
+}
+  
+store_df <- as.data.frame(store_list)
+print(store_df)
+```
+The decision boundary moves right as $r$ value increases, making less people can be predicted as diabetes. 
+
+### Q5
+
+```{r, logistic5, echo = FALSE}
+library(dplyr)
+data1 <- data1%>%mutate(Z1=V2^4, Z2=V2^3*V8, Z3=V2^2*V8^2, Z4=V2*V8^3, Z5=V8^4)
+
+m1=glm(V9~., data1, family = "binomial")
+m1$coefficients
+
+Prob=predict(m1, type="response")
+pred=ifelse(Prob>0.5, 1, 0)
+
+true <- data1$V9
+con_table <- table(true, pred)
+con_table
+
+train_error <- 1-sum(diag(con_table))/sum(con_table)
+cat("The training misclassification error is:",train_error,"\n")
+
+plot(data1$V2, data1$V8, col = pred + 1, pch = 19, cex = 0.5, xlab = "Plasma glucose concentration", ylab = "Age", main = "Predict label (r = 0.5)")
+legend("topleft", legend = c("No diabetes", "Diabetes"), col = c(1, 2), pch = 19)
+```
+The basis expansion trick makes the desicion boundary change from straight line to curved line. But the training misclassification rate does not improve much, still remaining closed to a quarter. From the confusion table, it can be seen that there are 45.1% people with diabetes who are not diagnosed. Therefore, this model still does a poor classification work.
+
+
 # Appendix
 ## Code for Assignment 1
 ### Q1
@@ -313,5 +405,27 @@ Larger $\lambda$ results to smaller DoF. As $\lambda$ increases, the parameters 
 ```
 ### Q4
 ```{r ref.label=c('linear_ridge4'), echo=TRUE, eval=FALSE}
+
+```
+
+## Code for Assignment 3
+### Q1
+```{r ref.label=c('logistic1'), echo=TRUE, eval=FALSE}
+
+```
+### Q2
+```{r ref.label=c('logistic2'), echo=TRUE, eval=FALSE}
+
+```
+### Q3
+```{r ref.label=c('logistic3'), echo=TRUE, eval=FALSE}
+
+```
+### Q4
+```{r ref.label=c('logistic4'), echo=TRUE, eval=FALSE}
+
+```
+### Q5
+```{r ref.label=c('logistic5'), echo=TRUE, eval=FALSE}
 
 ```
