@@ -7,6 +7,14 @@ output:
     latex_engine: xelatex
 ---
 
+The group report was made based on the discussion after all of us had finished all three assignments. 
+
+Assignment 1 was mainly contributed by Lepeng Zhang. 
+
+Assignment 2 was mainly contributed by Xuan Wang. 
+
+Assignment 3 was mainly contributed by Priyarani Patil.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
